@@ -1,5 +1,19 @@
 const express = require("express");
 const app = express();
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://study-notion-edtech-plaform.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
 
 const userRoutes = require("./routes/User");
 const profileRoutes = require("./routes/Profile");
@@ -8,7 +22,6 @@ const courseRoutes = require("./routes/Course");
 const contactUsRoute = require("./routes/Contact");
 const database = require("./config/database");
 const cookieParser = require("cookie-parser");
-const cors = require("cors");
 const {cloudinaryConnect } = require("./config/cloudinary");
 const fileUpload = require("express-fileupload");
 const dotenv = require("dotenv");
@@ -21,12 +34,10 @@ database.connect();
 //middlewares
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-	cors({
-		origin:"http://localhost:3000",
-		credentials:true,
-	})
-)
+
+
+app.options("*", cors()); // preflight handling
+
 
 app.use(
 	fileUpload({
