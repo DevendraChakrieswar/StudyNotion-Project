@@ -6,8 +6,10 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed:reviews": "node scripts/seedReviews.js"
+    "seed:reviews": "node scripts/seedReviews.js",
+    "build": "echo 'No build step required'"
   },
+
   "keywords": [],
   "author": "",
   "license": "ISC",
