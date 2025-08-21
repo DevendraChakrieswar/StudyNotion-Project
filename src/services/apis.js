@@ -1,7 +1,7 @@
 const BASE_URL =
   (typeof process !== "undefined" && process.env && process.env.REACT_APP_BASE_URL)
     ? process.env.REACT_APP_BASE_URL
-    : "https://studynotion-project-0fz5.onrender.com/"
+    : "https://studynotion-project-acp3.onrender.com"
 
 // AUTH ENDPOINTS
 export const endpoints = {
