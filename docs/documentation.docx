@@ -1,0 +1,226 @@
+High-level overview
+The app is an online learning platform with three roles:
+Student: browse catalog, buy courses, watch content, post reviews.
+Instructor: create/manage courses, sections, videos, view dashboard.
+Admin: restricted endpoints for categories.
+Backend is Node/Express with MongoDB/Mongoose, JWT cookies, and Cloudinary uploads.
+Frontend is React with Redux, Axios, and Tailwind.
+Roles and flows
+Student
+Browse catalog and course details
+Frontend pages: src/pages/Home.jsx, src/pages/CourseDetails.jsx, 
+src/components/common/Navbar.jsx
+ (fetches categories).
+Backend: GET /api/v1/course/getAllCourses, POST /api/v1/course/getCourseDetails, GET /api/v1/course/showAllCategories.
+Enroll and pay
+Frontend: src/services/operations/courseDetailsAPI.js, payment UX.
+Backend: POST /api/v1/payment/capturePayment, POST /api/v1/payment/verifyPayment (auth + isStudent).
+Learn and mark progress
+Frontend: src/pages/ViewCourse.jsx, src/components/core/ViewCourse/*.
+Backend: POST /api/v1/course/updateCourseProgress (auth + isStudent).
+Rate and review
+Frontend: src/components/core/ViewCourse/CourseReviewModal.jsx and src/components/common/ReviewSlider.jsx.
+Backend: POST /api/v1/course/createRating (auth + isStudent), GET /api/v1/course/getReviews, GET /api/v1/course/getAverageRating.
+Instructor
+Create/manage courses
+Frontend: src/components/core/Dashboard/AddCourse/*, src/services/operations/courseDetailsAPI.js.
+Backend:
+Courses: POST /api/v1/course/createCourse, POST /api/v1/course/editCourse, DELETE /api/v1/course/deleteCourse, GET /api/v1/course/getInstructorCourses (auth + isInstructor).
+Sections: POST /api/v1/course/addSection, POST /api/v1/course/updateSection, POST /api/v1/course/deleteSection (auth + isInstructor).
+Subsections: POST /api/v1/course/addSubSection, POST /api/v1/course/updateSubSection, POST /api/v1/course/deleteSubSection (auth + isInstructor).
+View instructor dashboard
+Backend: GET /api/v1/profile/instructorDashboard (auth + isInstructor).
+Update profile/picture
+Frontend: src/components/core/Dashboard/Settings/*, 
+src/services/operations/SettingsAPI.js
+.
+Backend: PUT /api/v1/profile/updateProfile, PUT /api/v1/profile/updateDisplayPicture (auth).
+Admin
+Manage categories
+Backend: POST /api/v1/course/createCategory (auth + isAdmin).
+Everyone can read: GET /api/v1/course/showAllCategories, POST /api/v1/course/getCategoryPageDetails.
+Backend routes and purpose
+Mounted in 
+server/index.js
+:
+
+app.use("/api/v1/auth", require("./routes/User"))
+POST /login → server/controllers/Auth.js:login
+POST /signup → server/controllers/Auth.js:signup
+POST /sendotp → server/controllers/Auth.js:sendotp
+POST /changepassword → server/controllers/Auth.js:changePassword (auth)
+POST /reset-password-token → server/controllers/ResetPassword.js:resetPasswordToken
+POST /reset-password → server/controllers/ResetPassword.js:resetPassword
+app.use("/api/v1/profile", require("./routes/Profile"))
+DELETE /deleteProfile → delete account (auth)
+PUT /updateProfile → update profile (auth)
+PUT /updateDisplayPicture → update avatar (auth)
+GET /getUserDetails → profile details (auth)
+GET /getEnrolledCourses → list student’s enrolled courses (auth)
+GET /instructorDashboard → instructor metrics (auth + isInstructor)
+app.use("/api/v1/course", require("./routes/Course"))
+Courses (auth + isInstructor): POST /createCourse, POST /editCourse, DELETE /deleteCourse, GET /getInstructorCourses
+Sections (auth + isInstructor): POST /addSection, POST /updateSection, POST /deleteSection
+Subsections (auth + isInstructor): POST /addSubSection, POST /updateSubSection, POST /deleteSubSection
+Public reads: GET /getAllCourses, POST /getCourseDetails
+Full details for enrolled users: POST /getFullCourseDetails (auth)
+Category: POST /createCategory (auth + isAdmin), GET /showAllCategories, POST /getCategoryPageDetails
+Rating/Review: POST /createRating (auth + isStudent), GET /getAverageRating, GET /getReviews
+Progress: POST /updateCourseProgress (auth + isStudent)
+app.use("/api/v1/payment", require("./routes/Payments"))
+POST /capturePayment, POST /verifyPayment, POST /sendPaymentSuccessEmail (auth + isStudent)
+app.use("/api/v1/reach", require("./routes/Contact"))
+POST /contact → server/controllers/ContactUs.js:contactUsController
+CORS and cookies:
+
+server/index.js
+: CORS origin http://localhost:3000 and cookie-parser.
+Uses express-fileupload and Cloudinary connect for media uploads.
+Database models and how they’re used
+server/models/User.js
+Fields: firstName, lastName, email, password, accountType (Admin/Student/Instructor), additionalDetails→Profile, courses (enrolled), image, courseProgress, token.
+Used by auth, enrollment, instructor relations.
+server/models/Profile.js
+Fields: gender, dateOfBirth, about, contactNumber.
+Linked as additionalDetails in User.
+server/models/Course.js
+Fields: courseName, courseDescription, instructor (User), whatYouWillLearn, courseContent (Section[]), ratingAndReviews (RatingAndReview[]), price, thumbnail, tag[], category, studentsEnrolled[], instructions[], status (Draft/Published).
+Core object for catalog and learning.
+server/models/Section.js
+Fields: sectionName, subSection[].
+Part of course content hierarchy.
+server/models/SubSection.js
+Likely fields: title, timeDuration, description, video URL; referenced by Section. (See file for specifics.)
+server/models/Category.js
+Fields: name/description; linked to courses (via Course.category).
+server/models/RatingAndRaview.js
+Note the filename has a typo; model is RatingAndReview.
+Fields: user, course, rating, review.
+Used for reviews and average ratings.
+server/models/CourseProgress.js
+Fields: courseId, completedVideos[], userId; tracks progress.
+server/models/OTP.js
+Fields: email, otp, createdAt; used for signup email verification.
+Authentication and authorization
+Login and signup: 
+server/controllers/Auth.js
+signup
+ validates OTP (OTP collection), hashes password, creates Profile, then User with image: "".
+login
+ compares passwords, signs JWT with { email, id, role } using process.env.JWT_SECRET, sets token cookie (httpOnly) and returns user.
+JWT and cookies
+Token is set as a cookie with a 3-day expiry.
+Frontend also saves token in Redux/localStorage for convenience.
+Middlewares: 
+server/middlewares/auth.js
+ (referenced in routes)
+auth
+ ensures a valid JWT and attaches req.user.
+isStudent
+, 
+isInstructor
+, 
+isAdmin
+ check req.user.role (role name in this code is accountType on User).
+Used throughout routes to protect actions (course creation, payments, etc.).
+Frontend structure and flows
+API connector and endpoints
+src/services/apiconnector.js
+ sets up Axios with baseURL from REACT_APP_BASE_URL and withCredentials: true.
+src/services/apis.js
+ centralizes endpoint strings.
+src/services/operations/*API.js implement thunks to call specific endpoints and update Redux (auth, profile, settings, courses).
+Auth flow
+src/services/operations/authAPI.js
+ handles 
+sendOtp
+, 
+signup
+, 
+login
+, 
+logout
+.
+After login, sets token, computes a fallback avatar if user.image is empty, saves user to Redux and localStorage.
+Profile and settings
+src/components/core/Dashboard/Settings/* and 
+src/services/operations/SettingsAPI.js
+ update profile and avatar.
+Avatar fallback added in 
+ProfileDropDown.jsx
+ and 
+ChangeProfilePicture.jsx
+.
+Catalog and course
+src/components/common/Navbar.jsx
+ loads categories into a dropdown.
+Cards, details, and rating stars in src/components/core/Catalog/Course_Card.jsx, src/pages/CourseDetails.jsx, src/components/common/RatingStars.jsx.
+Learning
+src/pages/ViewCourse.jsx and src/components/core/ViewCourse/* render the player, sidebar, and review modal.
+Progress updates via updateCourseProgress.
+Payments overview
+Backend: 
+server/routes/Payments.js
+ calls server/controllers/Payments.js (not opened here) for Razorpay flow:
+capturePayment creates an order and preps client.
+verifyPayment validates signature and enrolls the student in the course.
+sendPaymentSuccessEmail sends a confirmation via nodemailer.
+Config: server/config/razorpay.js defines provider keys; email uses server/utils/mailSender.js.
+Contact form
+POST /api/v1/reach/contact handled by server/controllers/ContactUs.js:contactUsController.
+Frontend: src/components/ContactPage/* posts the form.
+Packages used and why
+Server (
+server/package.json
+)
+express for HTTP server and routing.
+mongoose ODM for MongoDB.
+jsonwebtoken for JWT auth.
+cookie-parser to read/write auth cookies.
+cors to allow browser calls from http://localhost:3000.
+express-fileupload and cloudinary for media uploads (thumbnails, profile pictures).
+nodemailer for emails (OTP, password updates, receipts).
+otp-generator for numeric OTPs.
+razorpay for payment integration.
+dotenv for environment variables.
+nodemon for dev reload.
+Client (
+package.json
+)
+react, react-dom, react-router-dom for SPA.
+@reduxjs/toolkit, react-redux for state management.
+axios for HTTP requests.
+react-hot-toast for notifications.
+react-hook-form for forms and validation.
+react-icons for UI icons.
+swiper for carousels/sliders.
+react-markdown for safe markdown rendering.
+video-react to play course videos.
+chart.js, react-chartjs-2 in dashboards.
+tailwindcss for styling.
+Environment/config that matters
+Client: 
+src/.env
+ → REACT_APP_BASE_URL=http://localhost:4000/api/v1
+Server: server/.env → MONGODB_URL, JWT_SECRET, Cloudinary keys, Razorpay keys.
+CORS: 
+server/index.js
+ expects http://localhost:3000 unless you change origin.
+Notes about reviews and defaults
+Reviews model file is named 
+RatingAndRaview.js
+ but exported as RatingAndReview (works but watch the filename).
+On signup, user.image is empty; frontend applies a default Dicebear avatar unless a real image is uploaded.
+Seed script to add sample reviews for dev: 
+server/scripts/seedReviews.js
+ with npm run seed:reviews.
+How auth and roles work (simple explanation)
+When you log in, the server verifies your password and gives you a signed “ticket” (JWT) stored as a cookie.
+Every protected request must include that cookie; the 
+auth
+ middleware checks it and learns who you are and your role.
+Depending on your role:
+Students can buy courses, review, and track progress.
+Instructors can create and manage their courses.
+Admin can manage categories.
+This ensures only the right people can do sensitive actions.

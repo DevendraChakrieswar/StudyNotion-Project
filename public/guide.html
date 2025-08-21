@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StudyNotion Project Guide</title>
+  <style>
+    :root { --fg:#0f172a; --muted:#475569; --accent:#0ea5e9; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif;
+           color: var(--fg); margin: 0; background:#fff; }
+    .container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+    h1,h2,h3 { line-height: 1.2; }
+    h1 { font-size: 2rem; margin: 0 0 0.25rem; }
+    .subtitle { color: var(--muted); margin: 0 0 1.25rem; }
+    h2 { font-size: 1.25rem; margin-top: 2rem; border-left: 4px solid var(--accent); padding-left: 8px; }
+    h3 { font-size: 1.05rem; margin-top: 1.25rem; }
+    p { color: var(--fg); line-height: 1.6; }
+    code, .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .kbd { border:1px solid #cbd5e1; border-bottom-width:2px; border-radius:6px; padding:0 6px; font-size:0.9em; }
+    ul { margin: 0.5rem 0 0.5rem 1.25rem; }
+    .muted { color: var(--muted); }
+    .card { border:1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 12px 0; }
+    .printbar { position: sticky; top: 0; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 10px 0; }
+    .btn { background: var(--accent); color: #fff; border: 0; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+    .small { font-size: 0.9em; }
+    @media print { .printbar { display: none; } a { text-decoration: none; color: inherit; } }
+  </style>
+</head>
+<body>
+  <div class="printbar">
+    <div class="container">
+      <button class="btn" onclick="window.print()">Print or Save as PDF</button>
+      <span class="muted small" style="margin-left:12px">File → Print → Save as PDF</span>
+    </div>
+  </div>
+  <main class="container">
+    <header>
+      <h1>StudyNotion Project Guide</h1>
+      <p class="subtitle">Complete flows for all roles, routes, models, auth, frontend & backend.</p>
+    </header>
+
+    <section>
+      <h2>Overview</h2>
+      <ul>
+        <li><b>Backend</b>: Node.js, Express, MongoDB (Mongoose), JWT cookies, Cloudinary uploads</li>
+        <li><b>Frontend</b>: React, Redux Toolkit, Axios, Tailwind</li>
+        <li><b>Roles</b>: Student, Instructor, Admin</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Server Entrypoint</h2>
+      <div class="card">
+        <p><span class="code">server/index.js</span></p>
+        <ul>
+          <li><b>CORS</b>: origin <span class="code">http://localhost:3000</span></li>
+          <li><b>Routes</b> mounted:
+            <ul>
+              <li><span class="code">/api/v1/auth</span> → <span class="code">server/routes/User.js</span></li>
+              <li><span class="code">/api/v1/profile</span> → <span class="code">server/routes/Profile.js</span></li>
+              <li><span class="code">/api/v1/course</span> → <span class="code">server/routes/Course.js</span></li>
+              <li><span class="code">/api/v1/payment</span> → <span class="code">server/routes/Payments.js</span></li>
+              <li><span class="code">/api/v1/reach</span> → <span class="code">server/routes/Contact.js</span></li>
+            </ul>
+          </li>
+          <li><b>Middleware</b>: cookie-parser, cors, express.json, express-fileupload, cloudinaryConnect()</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Authentication & Password</h2>
+      <ul>
+        <li><b>Signup</b> <span class="code">POST /api/v1/auth/signup</span> — validate OTP, create Profile + User</li>
+        <li><b>Login</b> <span class="code">POST /api/v1/auth/login</span> — issue JWT as httpOnly cookie</li>
+        <li><b>Send OTP</b> <span class="code">POST /api/v1/auth/sendotp</span></li>
+        <li><b>Change Password</b> <span class="code">POST /api/v1/auth/changepassword</span> (auth)</li>
+        <li><b>Reset</b> <span class="code">POST /api/v1/auth/reset-password-token</span> → <span class="code">POST /api/v1/auth/reset-password</span></li>
+        <li><b>Middlewares</b>: <span class="code">auth</span>, <span class="code">isStudent</span>, <span class="code">isInstructor</span>, <span class="code">isAdmin</span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Profile</h2>
+      <ul>
+        <li><span class="code">DELETE /api/v1/profile/deleteProfile</span> (auth)</li>
+        <li><span class="code">PUT /api/v1/profile/updateProfile</span> (auth)</li>
+        <li><span class="code">PUT /api/v1/profile/updateDisplayPicture</span> (auth)</li>
+        <li><span class="code">GET /api/v1/profile/getUserDetails</span> (auth)</li>
+        <li><span class="code">GET /api/v1/profile/getEnrolledCourses</span> (auth)</li>
+        <li><span class="code">GET /api/v1/profile/instructorDashboard</span> (auth + isInstructor)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Courses, Sections, Reviews</h2>
+      <h3>Public</h3>
+      <ul>
+        <li><span class="code">GET /api/v1/course/getAllCourses</span></li>
+        <li><span class="code">POST /api/v1/course/getCourseDetails</span></li>
+        <li><span class="code">GET /api/v1/course/showAllCategories</span></li>
+        <li><span class="code">POST /api/v1/course/getCategoryPageDetails</span></li>
+      </ul>
+      <h3>Authoring (Instructor)</h3>
+      <ul>
+        <li><span class="code">POST /api/v1/course/createCourse</span></li>
+        <li><span class="code">POST /api/v1/course/editCourse</span></li>
+        <li><span class="code">DELETE /api/v1/course/deleteCourse</span></li>
+        <li><span class="code">GET /api/v1/course/getInstructorCourses</span></li>
+        <li><span class="code">POST /api/v1/course/addSection</span> / <span class="code">updateSection</span> / <span class="code">deleteSection</span></li>
+        <li><span class="code">POST /api/v1/course/addSubSection</span> / <span class="code">updateSubSection</span> / <span class="code">deleteSubSection</span></li>
+      </ul>
+      <h3>Enrolled-only</h3>
+      <ul>
+        <li><span class="code">POST /api/v1/course/getFullCourseDetails</span> (auth)</li>
+        <li><span class="code">POST /api/v1/course/updateCourseProgress</span> (auth + isStudent)</li>
+      </ul>
+      <h3>Ratings & Reviews</h3>
+      <ul>
+        <li><span class="code">POST /api/v1/course/createRating</span> (auth + isStudent)</li>
+        <li><span class="code">GET /api/v1/course/getAverageRating</span></li>
+        <li><span class="code">GET /api/v1/course/getReviews</span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Payments</h2>
+      <ul>
+        <li><span class="code">POST /api/v1/payment/capturePayment</span> (auth + isStudent) — create order</li>
+        <li><span class="code">POST /api/v1/payment/verifyPayment</span> (auth + isStudent) — verify & enroll</li>
+        <li><span class="code">POST /api/v1/payment/sendPaymentSuccessEmail</span> (auth + isStudent)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <ul>
+        <li><span class="code">POST /api/v1/reach/contact</span> — contact form</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Database Models</h2>
+      <ul>
+        <li><b>User</b> — name, email, password (hashed), <span class="code">accountType</span>, image, courses[], additionalDetails→Profile, courseProgress[], token</li>
+        <li><b>Profile</b> — gender, dateOfBirth, about, contactNumber (referenced by User)</li>
+        <li><b>Course</b> — name, description, instructor, sections, reviews, price, thumbnail, tags, category, studentsEnrolled, instructions, status</li>
+        <li><b>Section</b> — sectionName, subSection[]</li>
+        <li><b>SubSection</b> — title, description, timeDuration, videoUrl</li>
+        <li><b>Category</b> — name, description</li>
+        <li><b>RatingAndReview</b> — user, course, rating, review</li>
+        <li><b>CourseProgress</b> — userId, courseId, completedVideos[]</li>
+        <li><b>OTP</b> — email, otp, createdAt</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Frontend Structure & Flows</h2>
+      <ul>
+        <li><b>API</b>: <span class="code">src/services/apiconnector.js</span> (Axios, withCredentials), <span class="code">src/services/apis.js</span> endpoints</li>
+        <li><b>Auth</b>: <span class="code">src/services/operations/authAPI.js</span> — sendOtp, signup, login, logout</li>
+        <li><b>Settings</b>: <span class="code">src/services/operations/SettingsAPI.js</span> — profile & avatar updates</li>
+        <li><b>Catalog</b>: <span class="code">src/components/common/Navbar.jsx</span> loads categories; <span class="code">Home</span> & <span class="code">CourseDetails</span> pages</li>
+        <li><b>Learning</b>: <span class="code">src/pages/ViewCourse.jsx</span>, <span class="code">src/components/core/ViewCourse/*</span>; progress updates</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Auth & Roles (Plain-English)</h2>
+      <p>Login issues a signed token (JWT) stored in a cookie. Protected routes check this token (<span class="code">auth</span>). Role guards ensure only Students/ Instructors/ Admins can perform their respective actions.</p>
+    </section>
+
+    <section>
+      <h2>Packages Used</h2>
+      <h3>Server</h3>
+      <ul>
+        <li>express, mongoose, jsonwebtoken, cookie-parser, cors</li>
+        <li>express-fileupload, cloudinary</li>
+        <li>nodemailer, otp-generator, razorpay, dotenv</li>
+      </ul>
+      <h3>Client</h3>
+      <ul>
+        <li>react, react-router-dom</li>
+        <li>@reduxjs/toolkit, react-redux</li>
+        <li>axios, react-hot-toast, react-hook-form, react-icons</li>
+        <li>swiper, video-react, chart.js, react-chartjs-2, tailwindcss</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Environment</h2>
+      <ul>
+        <li><b>Client</b>: <span class="code">src/.env</span> → <span class="code">REACT_APP_BASE_URL</span></li>
+        <li><b>Server</b>: <span class="code">server/.env</span> → Mongo URL, JWT secret, Cloudinary & Razorpay keys, PORT</li>
+        <li><b>CORS</b>: configured in <span class="code">server/index.js</span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Dev Utilities</h2>
+      <ul>
+        <li>Seed sample reviews: <span class="code">server/scripts/seedReviews.js</span> → run <span class="code">npm run seed:reviews</span> in <span class="code">server/</span></li>
+      </ul>
+    </section>
+
+    <footer class="muted small" style="margin-top:32px">
+      Generated for StudyNotion. Use the Print button to save as PDF.
+    </footer>
+  </main>
+</body>
+</html>
