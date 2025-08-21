@@ -174,3 +174,5 @@ This document explains the full flow for every role, all backend routes and thei
 
 ---
 This guide covers both backend and frontend for technical and non-technical readers. Open `public/guide.html` in the browser to print as PDF.
+
+## Link - https://study-notion-edtech-plaform.vercel.app/
